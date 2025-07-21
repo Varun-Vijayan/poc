@@ -1,0 +1,49 @@
+{
+  "workflowName": "User Onboarding",
+  "description": "Complete user onboarding process with validation and notifications",
+  "stages": [
+    {
+      "id": "validate-input",
+      "function": "validateUserInput",
+      "params": {
+        "fields": ["email", "name"],
+        "data": {
+          "email": "varunvijayan21@gmail.com",
+          "name": "John Doe"
+        }
+      }
+    },
+    {
+      "id": "create-account",
+      "function": "createUserAccount",
+      "params": {
+        "email": "varunvijayan21@gmail.com",
+        "name": "John Doe",
+        "role": "user"
+      },
+      "dependsOn": ["validate-input"]
+    },
+    {
+      "id": "log-creation",
+      "function": "logEvent",
+      "params": {
+        "event": "user_account_created",
+        "data": {
+          "email": "varunvijayan21@gmail.com"
+        },
+        "level": "info"
+      },
+      "dependsOn": ["create-account"]
+    },
+    {
+      "id": "send-welcome-email",
+      "function": "sendEmailNotification",
+      "params": {
+        "email": "varunvijayan21@gmail.com",
+        "subject": "Welcome to X Flow!",
+        "content": "Thank you for joining our platform. Your account has been created successfully."
+      },
+      "dependsOn": ["create-account"]
+    }
+  ]
+} 

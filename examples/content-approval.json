@@ -1,0 +1,185 @@
+{
+  "workflowName": "Content Publication Approval",
+  "description": "Multi-stage content review and approval process with editorial workflow",
+  "stages": [
+    {
+      "id": "validate-content-submission",
+      "function": "validateUserInput",
+      "params": {
+        "fields": ["title", "author", "category", "content"],
+        "data": {
+          "title": "The Future of AI in Software Development",
+          "author": "alex.writer@company.com",
+          "category": "Technology",
+          "content": "Article content goes here..."
+        }
+      }
+    },
+    {
+      "id": "log-submission",
+      "function": "logEvent",
+      "params": {
+        "event": "content_submitted",
+        "data": {
+          "contentId": "CONTENT-2024-001",
+          "title": "The Future of AI in Software Development",
+          "author": "alex.writer@company.com",
+          "category": "Technology",
+          "submissionTime": "2024-01-15T10:30:00Z",
+          "wordCount": 1250
+        },
+        "level": "info"
+      },
+      "dependsOn": ["validate-content-submission"]
+    },
+    {
+      "id": "assign-to-editor",
+      "function": "sendEmailNotification",
+      "params": {
+        "email": "editor@company.com",
+        "subject": "New Content for Review - The Future of AI in Software Development",
+        "content": "A new article has been submitted for review. Title: 'The Future of AI in Software Development' by alex.writer@company.com. Content ID: CONTENT-2024-001. Please review and provide feedback within 24 hours."
+      },
+      "dependsOn": ["log-submission"]
+    },
+    {
+      "id": "editorial-review-delay",
+      "function": "delay",
+      "params": {
+        "seconds": 3
+      },
+      "dependsOn": ["assign-to-editor"]
+    },
+    {
+      "id": "log-editorial-approval",
+      "function": "logEvent",
+      "params": {
+        "event": "editorial_review_completed",
+        "data": {
+          "contentId": "CONTENT-2024-001",
+          "reviewer": "editor@company.com",
+          "status": "approved_with_minor_changes",
+          "comments": "Excellent article. Minor grammar fixes needed in paragraph 3.",
+          "reviewTime": "2024-01-15T14:45:00Z"
+        },
+        "level": "info"
+      },
+      "dependsOn": ["editorial-review-delay"]
+    },
+    {
+      "id": "notify-author-feedback",
+      "function": "sendEmailNotification",
+      "params": {
+        "email": "alex.writer@company.com",
+        "subject": "Editorial Review Complete - Minor Revisions Needed",
+        "content": "Your article 'The Future of AI in Software Development' has been reviewed. Status: Approved with minor changes. Please address the following: Minor grammar fixes needed in paragraph 3. Please resubmit within 48 hours."
+      },
+      "dependsOn": ["log-editorial-approval"]
+    },
+    {
+      "id": "author-revision-delay",
+      "function": "delay",
+      "params": {
+        "seconds": 2
+      },
+      "dependsOn": ["notify-author-feedback"]
+    },
+    {
+      "id": "log-author-revision",
+      "function": "logEvent",
+      "params": {
+        "event": "author_revision_submitted",
+        "data": {
+          "contentId": "CONTENT-2024-001",
+          "author": "alex.writer@company.com",
+          "revisionTime": "2024-01-16T09:15:00Z",
+          "changes": "Grammar fixes applied to paragraph 3"
+        },
+        "level": "info"
+      },
+      "dependsOn": ["author-revision-delay"]
+    },
+    {
+      "id": "seo-review",
+      "function": "httpRequest",
+      "params": {
+        "url": "https://jsonplaceholder.typicode.com/posts/2",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "dependsOn": ["log-author-revision"]
+    },
+    {
+      "id": "compliance-check",
+      "function": "logEvent",
+      "params": {
+        "event": "compliance_review_completed",
+        "data": {
+          "contentId": "CONTENT-2024-001",
+          "complianceOfficer": "compliance@company.com",
+          "legalStatus": "approved",
+          "brandingStatus": "approved",
+          "sensitivityLevel": "public"
+        },
+        "level": "info"
+      },
+      "dependsOn": ["log-author-revision"]
+    },
+    {
+      "id": "final-approval",
+      "function": "logEvent",
+      "params": {
+        "event": "content_approved_for_publication",
+        "data": {
+          "contentId": "CONTENT-2024-001",
+          "finalApprover": "content-director@company.com",
+          "approvalTime": "2024-01-16T15:30:00Z",
+          "scheduledPublicationDate": "2024-01-17T08:00:00Z",
+          "platform": "company-blog"
+        },
+        "level": "info"
+      },
+      "dependsOn": ["seo-review", "compliance-check"]
+    },
+    {
+      "id": "notify-publication-team",
+      "function": "sendEmailNotification",
+      "params": {
+        "email": "publishing@company.com",
+        "subject": "Content Approved for Publication - CONTENT-2024-001",
+        "content": "Content has been approved for publication: 'The Future of AI in Software Development' (CONTENT-2024-001). Scheduled for publication on Jan 17, 2024 at 8:00 AM. Please prepare for publication on company blog."
+      },
+      "dependsOn": ["final-approval"]
+    },
+    {
+      "id": "notify-author-publication",
+      "function": "sendEmailNotification",
+      "params": {
+        "email": "alex.writer@company.com",
+        "subject": "🎉 Your Article is Approved for Publication!",
+        "content": "Congratulations! Your article 'The Future of AI in Software Development' has been approved and is scheduled for publication on January 17, 2024 at 8:00 AM. Thank you for your excellent work!"
+      },
+      "dependsOn": ["final-approval"]
+    },
+    {
+      "id": "complete-approval-process",
+      "function": "logEvent",
+      "params": {
+        "event": "content_approval_workflow_completed",
+        "data": {
+          "contentId": "CONTENT-2024-001",
+          "title": "The Future of AI in Software Development",
+          "author": "alex.writer@company.com",
+          "totalProcessingDays": 2,
+          "finalStatus": "approved_for_publication",
+          "publicationDate": "2024-01-17T08:00:00Z",
+          "workflowStages": 13
+        },
+        "level": "info"
+      },
+      "dependsOn": ["notify-publication-team", "notify-author-publication"]
+    }
+  ]
+} 

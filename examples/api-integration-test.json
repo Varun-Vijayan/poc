@@ -1,0 +1,196 @@
+{
+  "workflowName": "API Integration Testing Suite",
+  "description": "Automated API testing workflow with health checks, data validation, and performance monitoring",
+  "stages": [
+    {
+      "id": "log-test-start",
+      "function": "logEvent",
+      "params": {
+        "event": "api_test_suite_started",
+        "data": {
+          "testSuiteId": "API-TEST-2024-001",
+          "targetAPI": "JSONPlaceholder API",
+          "startTime": "2024-01-17T10:00:00Z",
+          "testType": "integration"
+        },
+        "level": "info"
+      }
+    },
+    {
+      "id": "health-check",
+      "function": "httpRequest",
+      "params": {
+        "url": "https://jsonplaceholder.typicode.com/posts/1",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json",
+          "User-Agent": "XFlow-API-Tester/1.0"
+        }
+      },
+      "dependsOn": ["log-test-start"]
+    },
+    {
+      "id": "log-health-check-result",
+      "function": "logEvent",
+      "params": {
+        "event": "health_check_completed",
+        "data": {
+          "testSuiteId": "API-TEST-2024-001",
+          "endpoint": "/posts/1",
+          "method": "GET",
+          "expectedStatus": 200,
+          "testResult": "passed"
+        },
+        "level": "info"
+      },
+      "dependsOn": ["health-check"]
+    },
+    {
+      "id": "test-post-creation",
+      "function": "httpRequest",
+      "params": {
+        "url": "https://jsonplaceholder.typicode.com/posts",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "data": {
+          "title": "Test Post from XFlow",
+          "body": "This is a test post created by the XFlow API testing workflow",
+          "userId": 1
+        }
+      },
+      "dependsOn": ["log-health-check-result"]
+    },
+    {
+      "id": "validate-post-creation",
+      "function": "logEvent",
+      "params": {
+        "event": "post_creation_test_completed",
+        "data": {
+          "testSuiteId": "API-TEST-2024-001",
+          "endpoint": "/posts",
+          "method": "POST",
+          "testDescription": "Create new post via API",
+          "expectedBehavior": "Returns 201 with created post data",
+          "testResult": "passed"
+        },
+        "level": "info"
+      },
+      "dependsOn": ["test-post-creation"]
+    },
+    {
+      "id": "test-user-lookup",
+      "function": "httpRequest",
+      "params": {
+        "url": "https://jsonplaceholder.typicode.com/users/1",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "dependsOn": ["validate-post-creation"]
+    },
+    {
+      "id": "validate-user-data",
+      "function": "validateUserInput",
+      "params": {
+        "fields": ["name", "email"],
+        "data": {
+          "name": "Leanne Graham",
+          "email": "Sincere@april.biz"
+        }
+      },
+      "dependsOn": ["test-user-lookup"]
+    },
+    {
+      "id": "test-pagination",
+      "function": "httpRequest",
+      "params": {
+        "url": "https://jsonplaceholder.typicode.com/posts?_limit=5&_page=1",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "dependsOn": ["validate-user-data"]
+    },
+    {
+      "id": "test-error-handling",
+      "function": "httpRequest",
+      "params": {
+        "url": "https://jsonplaceholder.typicode.com/posts/9999",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "dependsOn": ["test-pagination"]
+    },
+    {
+      "id": "performance-delay-test",
+      "function": "delay",
+      "params": {
+        "seconds": 1
+      },
+      "dependsOn": ["test-error-handling"]
+    },
+    {
+      "id": "log-performance-metrics",
+      "function": "logEvent",
+      "params": {
+        "event": "performance_test_completed",
+        "data": {
+          "testSuiteId": "API-TEST-2024-001",
+          "averageResponseTime": "150ms",
+          "totalRequests": 5,
+          "successfulRequests": 4,
+          "failedRequests": 1,
+          "successRate": "80%",
+          "performanceRating": "good"
+        },
+        "level": "info"
+      },
+      "dependsOn": ["performance-delay-test"]
+    },
+    {
+      "id": "notify-test-team",
+      "function": "sendEmailNotification",
+      "params": {
+        "email": "qa-team@company.com",
+        "subject": "API Integration Tests Completed - JSONPlaceholder API",
+        "content": "API integration test suite (API-TEST-2024-001) has completed. Results: 5 total requests, 4 successful, 1 expected failure (404 test), 80% success rate, average response time 150ms. Performance rating: Good. All critical endpoints are functioning correctly."
+      },
+      "dependsOn": ["log-performance-metrics"]
+    },
+    {
+      "id": "notify-dev-team",
+      "function": "sendEmailNotification",
+      "params": {
+        "email": "dev-team@company.com",
+        "subject": "API Health Check Results - All Systems Green",
+        "content": "Regular API health check completed successfully. All endpoints responding normally. JSONPlaceholder API integration is stable. Test suite ID: API-TEST-2024-001."
+      },
+      "dependsOn": ["log-performance-metrics"]
+    },
+    {
+      "id": "complete-test-suite",
+      "function": "logEvent",
+      "params": {
+        "event": "api_test_suite_completed",
+        "data": {
+          "testSuiteId": "API-TEST-2024-001",
+          "endTime": "2024-01-17T10:05:30Z",
+          "totalDuration": "5 minutes 30 seconds",
+          "testsExecuted": 8,
+          "overallStatus": "passed",
+          "criticalIssues": 0,
+          "warnings": 0,
+          "nextScheduledTest": "2024-01-17T18:00:00Z"
+        },
+        "level": "info"
+      },
+      "dependsOn": ["notify-test-team", "notify-dev-team"]
+    }
+  ]
+} 

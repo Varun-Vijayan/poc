@@ -1,0 +1,129 @@
+{
+  "workflowName": "E-Commerce Order Processing",
+  "description": "Complete order processing workflow with validation, payment, inventory, and notifications",
+  "stages": [
+    {
+      "id": "validate-order",
+      "function": "validateUserInput",
+      "params": {
+        "fields": ["customerEmail", "productId", "quantity", "paymentMethod"],
+        "data": {
+          "customerEmail": "customer@example.com",
+          "productId": "PROD-12345",
+          "quantity": "2",
+          "paymentMethod": "credit_card"
+        }
+      }
+    },
+    {
+      "id": "check-inventory",
+      "function": "httpRequest",
+      "params": {
+        "url": "https://jsonplaceholder.typicode.com/posts/1",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "dependsOn": ["validate-order"]
+    },
+    {
+      "id": "calculate-pricing",
+      "function": "logEvent",
+      "params": {
+        "event": "pricing_calculated",
+        "data": {
+          "productId": "PROD-12345",
+          "quantity": 2,
+          "unitPrice": 29.99,
+          "totalPrice": 59.98,
+          "tax": 4.80,
+          "grandTotal": 64.78
+        },
+        "level": "info"
+      },
+      "dependsOn": ["check-inventory"]
+    },
+    {
+      "id": "process-payment",
+      "function": "delay",
+      "params": {
+        "seconds": 2
+      },
+      "dependsOn": ["calculate-pricing"]
+    },
+    {
+      "id": "log-payment-success",
+      "function": "logEvent",
+      "params": {
+        "event": "payment_processed",
+        "data": {
+          "orderId": "ORD-78910",
+          "paymentId": "PAY-11223",
+          "amount": 64.78,
+          "status": "completed"
+        },
+        "level": "info"
+      },
+      "dependsOn": ["process-payment"]
+    },
+    {
+      "id": "reserve-inventory",
+      "function": "logEvent",
+      "params": {
+        "event": "inventory_reserved",
+        "data": {
+          "productId": "PROD-12345",
+          "quantity": 2,
+          "reservationId": "RES-44556"
+        },
+        "level": "info"
+      },
+      "dependsOn": ["log-payment-success"]
+    },
+    {
+      "id": "send-order-confirmation",
+      "function": "sendEmailNotification",
+      "params": {
+        "email": "customer@example.com",
+        "subject": "Order Confirmation - Order #ORD-78910",
+        "content": "Thank you for your order! Your order #ORD-78910 has been confirmed and payment of $64.78 has been processed. We'll send you tracking information once your order ships."
+      },
+      "dependsOn": ["reserve-inventory"]
+    },
+    {
+      "id": "notify-fulfillment-team",
+      "function": "sendEmailNotification",
+      "params": {
+        "email": "fulfillment@company.com",
+        "subject": "New Order Ready for Fulfillment - #ORD-78910",
+        "content": "New order requires fulfillment: Order #ORD-78910, Product PROD-12345, Quantity: 2. Customer: customer@example.com. Reservation ID: RES-44556"
+      },
+      "dependsOn": ["reserve-inventory"]
+    },
+    {
+      "id": "schedule-shipping",
+      "function": "delay",
+      "params": {
+        "seconds": 1
+      },
+      "dependsOn": ["send-order-confirmation", "notify-fulfillment-team"]
+    },
+    {
+      "id": "final-order-log",
+      "function": "logEvent",
+      "params": {
+        "event": "order_processing_completed",
+        "data": {
+          "orderId": "ORD-78910",
+          "customerId": "customer@example.com",
+          "totalAmount": 64.78,
+          "processingTimeSeconds": 5,
+          "status": "confirmed_and_queued_for_fulfillment"
+        },
+        "level": "info"
+      },
+      "dependsOn": ["schedule-shipping"]
+    }
+  ]
+} 

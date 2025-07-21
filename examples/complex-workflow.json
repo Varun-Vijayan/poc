@@ -1,0 +1,107 @@
+{
+  "workflowName": "Complex Multi-Stage Workflow",
+  "description": "Demonstrates parallel execution, dependencies, and various function types",
+  "stages": [
+    {
+      "id": "init-log",
+      "function": "logEvent",
+      "params": {
+        "event": "workflow_started",
+        "data": {
+          "timestamp": "2024-01-01T00:00:00Z",
+          "workflowType": "complex"
+        },
+        "level": "info"
+      }
+    },
+    {
+      "id": "validate-user",
+      "function": "validateUserInput",
+      "params": {
+        "fields": ["email", "name", "phone"],
+        "data": {
+          "email": "john.doe@example.com",
+          "name": "John Doe",
+          "phone": "+1-555-0123"
+        }
+      },
+      "dependsOn": ["init-log"]
+    },
+    {
+      "id": "external-check",
+      "function": "httpRequest",
+      "params": {
+        "url": "https://jsonplaceholder.typicode.com/users/1",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "dependsOn": ["init-log"]
+    },
+    {
+      "id": "create-user-account",
+      "function": "createUserAccount",
+      "params": {
+        "email": "john.doe@example.com",
+        "name": "John Doe",
+        "role": "premium"
+      },
+      "dependsOn": ["validate-user", "external-check"]
+    },
+    {
+      "id": "setup-delay",
+      "function": "delay",
+      "params": {
+        "seconds": 3
+      },
+      "dependsOn": ["create-user-account"]
+    },
+    {
+      "id": "log-account-created",
+      "function": "logEvent",
+      "params": {
+        "event": "account_created",
+        "data": {
+          "userEmail": "john.doe@example.com",
+          "accountType": "premium"
+        },
+        "level": "info"
+      },
+      "dependsOn": ["create-user-account"]
+    },
+    {
+      "id": "send-welcome-email",
+      "function": "sendEmailNotification",
+      "params": {
+        "email": "john.doe@example.com",
+        "subject": "Welcome to X Flow Premium!",
+        "content": "Your premium account has been created. Enjoy all the advanced features!"
+      },
+      "dependsOn": ["setup-delay", "log-account-created"]
+    },
+    {
+      "id": "send-admin-notification",
+      "function": "sendEmailNotification",
+      "params": {
+        "email": "admin@example.com",
+        "subject": "New Premium User Registered",
+        "content": "A new premium user (john.doe@example.com) has registered on the platform."
+      },
+      "dependsOn": ["setup-delay", "log-account-created"]
+    },
+    {
+      "id": "final-log",
+      "function": "logEvent",
+      "params": {
+        "event": "workflow_completed",
+        "data": {
+          "userEmail": "john.doe@example.com",
+          "completedStages": 9
+        },
+        "level": "info"
+      },
+      "dependsOn": ["send-welcome-email", "send-admin-notification"]
+    }
+  ]
+} 

@@ -1,0 +1,156 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* React Flow Styles */
+@import 'reactflow/dist/style.css';
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+/* Custom styles for workflow stages */
+.workflow-stage {
+  @apply border-2 rounded-lg p-3 min-w-[200px] shadow-md;
+}
+
+.workflow-stage.pending {
+  @apply border-gray-300 bg-gray-50;
+}
+
+.workflow-stage.in-progress {
+  @apply border-blue-400 bg-blue-50;
+}
+
+.workflow-stage.completed {
+  @apply border-green-400 bg-green-50;
+}
+
+.workflow-stage.failed {
+  @apply border-red-400 bg-red-50;
+}
+
+/* File upload area */
+.upload-area {
+  @apply border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-colors;
+}
+
+.upload-area:hover {
+  @apply border-blue-400 bg-blue-50;
+}
+
+.upload-area.drag-over {
+  @apply border-blue-500 bg-blue-100;
+}
+
+/* Workflow Builder specific styles */
+.react-flow__node-workflowFunction {
+  @apply cursor-pointer;
+}
+
+.react-flow__node-workflowFunction:hover {
+  @apply shadow-lg;
+}
+
+.react-flow__node-workflowFunction.selected {
+  @apply ring-2 ring-blue-500 ring-opacity-50;
+}
+
+/* Handle styles */
+.react-flow__handle {
+  @apply transition-all duration-200;
+}
+
+.react-flow__handle:hover {
+  @apply scale-110;
+}
+
+/* Edge styles */
+.react-flow__edge-path {
+  stroke-width: 2;
+  stroke: #6b7280;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: #3b82f6;
+  stroke-width: 3;
+}
+
+/* Panel styles */
+.react-flow__panel {
+  @apply bg-white rounded-lg shadow-lg border border-gray-200;
+}
+
+/* Controls */
+.react-flow__controls {
+  @apply bg-white rounded-lg shadow-lg border border-gray-200;
+}
+
+.react-flow__controls-button {
+  @apply text-gray-600 hover:text-gray-900 transition-colors;
+}
+
+/* MiniMap */
+.react-flow__minimap {
+  @apply bg-white rounded-lg shadow-lg border border-gray-200;
+}
+
+/* Animations */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Node library panel */
+.node-library-panel {
+  @apply bg-white border-r border-gray-200 overflow-hidden;
+}
+
+.node-config-panel {
+  @apply bg-white border-l border-gray-200 overflow-hidden;
+}
+
+/* Scrollbar styling */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  @apply bg-gray-100 rounded-full;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+} 

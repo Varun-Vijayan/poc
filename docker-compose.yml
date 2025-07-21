@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # Temporal server
+  temporal:
+    image: temporalio/auto-setup:1.22.0
+    ports:
+      - "7234:7233"   # Temporal gRPC - changed to avoid conflicts
+    environment:
+      - DB=postgresql
+      - DB_PORT=5432
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - POSTGRES_SEEDS=postgresql
+    depends_on:
+      - postgresql
+
+  # Temporal Web UI
+  temporal-web:
+    image: temporalio/ui:2.21.3
+    ports:
+      - "8234:8080"   # Web UI port
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    depends_on:
+      - temporal
+
+  # PostgreSQL database for Temporal
+  postgresql:
+    image: postgres:13
+    environment:
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_USER: temporal
+      POSTGRES_DB: temporal
+    ports:
+      - "5433:5432"   # Changed from 5432 to 5433 to avoid conflicts
+    volumes:
+      - postgresql-data:/var/lib/postgresql/data
+
+  # Temporal Admin Tools (optional)
+  temporal-admin-tools:
+    image: temporalio/admin-tools:1.22.0
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_CLI_ADDRESS=temporal:7233
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgresql-data:
+  temporal-data: 

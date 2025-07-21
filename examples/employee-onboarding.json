@@ -1,0 +1,146 @@
+{
+  "workflowName": "Employee Onboarding Process",
+  "description": "Comprehensive new employee onboarding with IT setup, HR tasks, and notifications",
+  "stages": [
+    {
+      "id": "validate-employee-data",
+      "function": "validateUserInput",
+      "params": {
+        "fields": ["email", "name", "department", "startDate"],
+        "data": {
+          "email": "jane.doe@company.com",
+          "name": "Jane Doe",
+          "department": "Engineering",
+          "startDate": "2024-02-01"
+        }
+      }
+    },
+    {
+      "id": "create-employee-account",
+      "function": "createUserAccount",
+      "params": {
+        "email": "jane.doe@company.com",
+        "name": "Jane Doe",
+        "role": "employee"
+      },
+      "dependsOn": ["validate-employee-data"]
+    },
+    {
+      "id": "log-account-creation",
+      "function": "logEvent",
+      "params": {
+        "event": "employee_account_created",
+        "data": {
+          "employeeEmail": "jane.doe@company.com",
+          "department": "Engineering",
+          "accountType": "employee"
+        },
+        "level": "info"
+      },
+      "dependsOn": ["create-employee-account"]
+    },
+    {
+      "id": "request-it-equipment",
+      "function": "httpRequest",
+      "params": {
+        "url": "https://jsonplaceholder.typicode.com/posts",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "data": {
+          "employee": "jane.doe@company.com",
+          "department": "Engineering",
+          "equipment": ["laptop", "monitor", "keyboard", "mouse"],
+          "priority": "standard"
+        }
+      },
+      "dependsOn": ["create-employee-account"]
+    },
+    {
+      "id": "setup-security-access",
+      "function": "logEvent",
+      "params": {
+        "event": "security_access_requested",
+        "data": {
+          "employeeEmail": "jane.doe@company.com",
+          "badgeNumber": "EMP-2024-0142",
+          "accessLevels": ["floor-2", "engineering-lab", "cafeteria"],
+          "keyCardStatus": "pending"
+        },
+        "level": "info"
+      },
+      "dependsOn": ["create-employee-account"]
+    },
+    {
+      "id": "schedule-orientation",
+      "function": "delay",
+      "params": {
+        "seconds": 2
+      },
+      "dependsOn": ["log-account-creation"]
+    },
+    {
+      "id": "notify-it-department",
+      "function": "sendEmailNotification",
+      "params": {
+        "email": "it-helpdesk@company.com",
+        "subject": "New Employee IT Setup Required - Jane Doe",
+        "content": "New employee Jane Doe (jane.doe@company.com) starts on 2024-02-01. Please prepare standard Engineering department equipment and set up accounts. Equipment request has been submitted."
+      },
+      "dependsOn": ["request-it-equipment", "setup-security-access"]
+    },
+    {
+      "id": "notify-hr-team",
+      "function": "sendEmailNotification",
+      "params": {
+        "email": "hr@company.com",
+        "subject": "New Employee Onboarding - Jane Doe",
+        "content": "Employee onboarding initiated for Jane Doe (Engineering). Please prepare welcome materials and schedule first-day check-in. Security access requested with badge #EMP-2024-0142."
+      },
+      "dependsOn": ["setup-security-access", "schedule-orientation"]
+    },
+    {
+      "id": "notify-manager",
+      "function": "sendEmailNotification",
+      "params": {
+        "email": "engineering-manager@company.com",
+        "subject": "New Team Member Starting - Jane Doe",
+        "content": "Your new team member Jane Doe will be starting on 2024-02-01. IT setup and security access are being processed. Please prepare workspace and assign an onboarding buddy."
+      },
+      "dependsOn": ["notify-it-department", "notify-hr-team"]
+    },
+    {
+      "id": "send-welcome-email",
+      "function": "sendEmailNotification",
+      "params": {
+        "email": "jane.doe@company.com",
+        "subject": "Welcome to the Team! - Your First Day Information",
+        "content": "Welcome to our company, Jane! We're excited to have you join the Engineering team. Your first day is February 1st, 2024. Please arrive at 9 AM for orientation. Your IT equipment and security access are being prepared. Contact hr@company.com if you have any questions."
+      },
+      "dependsOn": ["notify-manager"]
+    },
+    {
+      "id": "complete-onboarding-setup",
+      "function": "logEvent",
+      "params": {
+        "event": "onboarding_process_completed",
+        "data": {
+          "employeeEmail": "jane.doe@company.com",
+          "employeeName": "Jane Doe",
+          "department": "Engineering",
+          "startDate": "2024-02-01",
+          "badgeNumber": "EMP-2024-0142",
+          "accountCreated": true,
+          "itNotified": true,
+          "hrNotified": true,
+          "managerNotified": true,
+          "welcomeEmailSent": true,
+          "onboardingStatus": "ready_for_first_day"
+        },
+        "level": "info"
+      },
+      "dependsOn": ["send-welcome-email"]
+    }
+  ]
+} 
