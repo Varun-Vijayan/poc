@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Temporal server with JWT authentication
+  # Temporal server with simple authentication
   temporal:
     image: temporalio/auto-setup:1.22.0
     ports:
@@ -12,39 +12,11 @@ services:
       - POSTGRES_USER=temporal
       - POSTGRES_PWD=temporal
       - POSTGRES_SEEDS=postgresql
-      # Enable JWT authentication
-      - TEMPORAL_JWT_CLAIM_MAPPER=default
+      # Enable authentication with a simple setup
       - TEMPORAL_AUTH_ENABLED=true
-      - TEMPORAL_JWT_KEY_SOURCE_URIS=http://temporal:8080/jwks
+      - TEMPORAL_CLI_SHOW_STACKS=1
     depends_on:
       - postgresql
-      - jwt-server
-
-  # Simple JWT server for testing
-  jwt-server:
-    image: nginx:alpine
-    ports:
-      - "8080:80"
-    volumes:
-      - ./jwt-config:/usr/share/nginx/html
-    command: >
-      sh -c "
-      mkdir -p /usr/share/nginx/html &&
-      cat > /usr/share/nginx/html/jwks <<EOF
-      {
-        \"keys\": [
-          {
-            \"kty\": \"RSA\",
-            \"use\": \"sig\",
-            \"kid\": \"temporal-key\",
-            \"n\": \"0vx7agoebGcQSuuPiLJXZptN9nndrQmbXEps2aiAFbWhM78LhWx4cbbfAAtVT86zwu1RK7aPFFxuhDR1L6tSoc_BJECPebWKRXjBZCiFV4n3oknjhMstn64tZ_2W-5JsGY4Hc5n9yBXArwl93lqt7_RN5w6Cf0h4QyQ5v-65YGjQR0_FDW2QvzqY368QQMicAtaSqzs8KJZgnYb9c7d0zgdAZHzu6qMQvRL5hajrn1n91CbOpbISD08qNLyrdkt-bFTWhAI4vMQFh6WeZu0fM4lFd2NcRwr3XPksINHaQ-G_xBniIqbw0Ls1jF44-csFCur-kEgU8awapJzKnqDKgw\",
-            \"e\": \"AQAB\"
-          }
-        ]
-      }
-      EOF
-      nginx -g 'daemon off;'
-      "
 
   # Temporal Web UI with auth
   temporal-web:
@@ -54,9 +26,6 @@ services:
     environment:
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_CORS_ORIGINS=http://localhost:3000
-      # Enable auth in UI
-      - TEMPORAL_AUTH_ENABLED=true
-      - TEMPORAL_AUTH_PROVIDER_URL=http://jwt-server:80
     depends_on:
       - temporal
 

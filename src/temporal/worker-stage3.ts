@@ -1,6 +1,5 @@
 import { Worker, NativeConnection } from '@temporalio/worker';
 import * as stage3Activities from './activities-stage3';
-import * as fs from 'fs';
 
 async function run() {
   console.log('=== TEMPORAL WORKER 3 (FINAL PROCESSING & NOTIFICATIONS) STARTING ===');
@@ -10,20 +9,18 @@ async function run() {
   console.log('SENDGRID_FROM_EMAIL:', process.env.SENDGRID_FROM_EMAIL);
   
   try {
-    // Read JWT token for authentication
-    const jwtToken = process.env.TEMPORAL_JWT_TOKEN || 
-      fs.readFileSync('local-worker-stage3-token.jwt', 'utf8').trim();
+    console.log('🔍 Connecting to:', process.env.TEMPORAL_ADDRESS);
     
-    console.log('🔐 Using JWT authentication for Worker 3');
-    
-    // Create connection to Temporal server with JWT auth
+    // Create connection to Temporal server (simplified for testing)
     const connection = await NativeConnection.connect({
       address: process.env.TEMPORAL_ADDRESS || 'localhost:7234',
-      // No TLS needed for localhost port forwarding
-      metadata: {
-        'authorization': `Bearer ${jwtToken}`
-      }
+      // Enable TLS if connecting to HTTPS Codespace URL
+      ...(process.env.TEMPORAL_ADDRESS?.includes('github.dev') ? {
+        tls: {}
+      } : {}),
     });
+    
+    console.log('✅ Connection established');
 
     // Create a Worker to run Workflows and Activities
     const worker = await Worker.create({
