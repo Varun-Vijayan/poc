@@ -17,13 +17,13 @@ services:
       - TEMPORAL_ENVIRONMENT=development
       - TEMPORAL_ROOT=/etc/temporal
     volumes:
-      - ./temporal-config:/etc/temporal/config/custom
+      - ./temporal-config:/etc/temporal/custom
     entrypoint: >
       sh -c "
       echo 'Loading custom Temporal configuration...' &&
-      ls -la /etc/temporal/config/custom/ &&
+      ls -la /etc/temporal/custom/ &&
       echo 'Config file contents (first 20 lines):' &&
-      head -20 /etc/temporal/config/custom/config.yaml &&
+      head -20 /etc/temporal/custom/config.yaml &&
       echo 'Environment variables:' &&
       echo 'TEMPORAL_ROOT=/etc/temporal' &&
       echo 'TEMPORAL_CONFIG_DIR=custom' &&
