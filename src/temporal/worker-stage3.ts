@@ -9,15 +9,37 @@ async function run() {
   console.log('SENDGRID_FROM_EMAIL:', process.env.SENDGRID_FROM_EMAIL);
   
   try {
-    console.log('🔍 Connecting to:', process.env.TEMPORAL_ADDRESS || 'localhost:7233');
+    const rawAddress = process.env.TEMPORAL_ADDRESS || 'localhost:7233';
+    console.log('🔍 Raw address:', rawAddress);
+    
+    // Parse the address to handle Codespace HTTPS URLs
+    let address: string;
+    let useTLS = false;
+    
+    if (rawAddress.startsWith('https://')) {
+      // Extract hostname from HTTPS URL and use port 443
+      const url = new URL(rawAddress);
+      address = `${url.hostname}:443`;
+      useTLS = true;
+      console.log('🔒 Using HTTPS Codespace URL - extracted address:', address);
+    } else if (rawAddress.includes('github.dev')) {
+      // Handle github.dev domains without https prefix
+      const hostname = rawAddress.replace(/^https?:\/\//, '').replace(/\/$/, '');
+      address = `${hostname}:443`;
+      useTLS = true;
+      console.log('🔒 Using GitHub Codespace domain - address:', address);
+    } else {
+      // Local or standard hostname:port
+      address = rawAddress;
+      console.log('🏠 Using local/standard address:', address);
+    }
+    
+    console.log('🔍 Connecting to:', address, useTLS ? '(with TLS)' : '(without TLS)');
     
     // Create connection to Temporal server
     const connectionOptions: any = {
-      address: process.env.TEMPORAL_ADDRESS || 'localhost:7233',
-      // Enable TLS if connecting to HTTPS Codespace URL
-      ...(process.env.TEMPORAL_ADDRESS?.includes('github.dev') ? {
-        tls: {}
-      } : {})
+      address: address,
+      ...(useTLS ? { tls: {} } : {})
     };
     
     const connection = await NativeConnection.connect(connectionOptions);
