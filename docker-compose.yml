@@ -22,8 +22,8 @@ services:
       sh -c "
       echo 'Loading custom Temporal configuration...' &&
       ls -la /etc/temporal/custom/ &&
-      echo 'Config file contents (first 20 lines):' &&
-      head -20 /etc/temporal/custom/config.yaml &&
+      echo 'Config template contents (first 20 lines):' &&
+      head -20 /etc/temporal/custom/config_template.yaml &&
       echo 'Environment variables:' &&
       echo 'TEMPORAL_ROOT=/etc/temporal' &&
       echo 'TEMPORAL_CONFIG_DIR=custom' &&
