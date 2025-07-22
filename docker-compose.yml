@@ -19,7 +19,6 @@ services:
     container_name: temporal
     depends_on:
       - postgresql
-      - jwt-server
     environment:
       - DB=postgresql
       - DB_PORT=5432
@@ -29,39 +28,12 @@ services:
       - ENABLE_ES=false
       - ES_SEEDS=
       - ES_VERSION=v7
-      # Enable auto-setup first
-      - SKIP_SCHEMA_SETUP=false
     image: temporalio/auto-setup:1.22.0
     networks:
       - temporal-network
     ports:
       - "0.0.0.0:7233:7233"
       - "0.0.0.0:7234:7234"
-    volumes:
-      - ./temporal-config:/etc/temporal/config/custom
-    # First run auto-setup to initialize DB, then restart with JWT
-    entrypoint: >
-      sh -c "
-        echo '🚀 Starting Temporal Auto-Setup (Stage 1: Database Initialization)' &&
-        if [ ! -f /tmp/schema_initialized ]; then
-          echo '📁 Initializing database schema...' &&
-          temporal-server --env development start &
-          SETUP_PID=\$$! &&
-          sleep 45 &&
-          echo '✅ Database should be initialized, stopping setup server...' &&
-          kill \$$SETUP_PID || true &&
-          sleep 10 &&
-          touch /tmp/schema_initialized &&
-          echo '✅ Schema initialization complete'
-        fi &&
-        echo '🔑 Starting Temporal with JWT Authentication (Stage 2)...' &&
-        export TEMPORAL_CONFIG_DIR=custom &&
-        export TEMPORAL_ENVIRONMENT=development &&
-        export TEMPORAL_ROOT=/etc/temporal &&
-        ls -la /etc/temporal/config/custom/ &&
-        echo '🎯 Starting server with JWT config...' &&
-        exec temporal-server --env development --config custom start
-      "
 
   temporal-admin-tools:
     container_name: temporal-admin-tools
