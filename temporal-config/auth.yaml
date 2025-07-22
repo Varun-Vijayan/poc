@@ -102,5 +102,5 @@ archival:
         dirMode: "0766"
 
 dynamicConfigClient:
-  filepath: "/etc/temporal/config/dynamicconfig"
+  filepath: "/etc/temporal/config/custom/dynamicconfig"
   pollInterval: "10s" 

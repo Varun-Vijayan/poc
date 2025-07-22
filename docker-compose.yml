@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Temporal server with proper authorization
+  # Temporal server with config file authentication
   temporal:
     image: temporalio/auto-setup:1.22.0
     ports:
@@ -12,13 +12,14 @@ services:
       - POSTGRES_USER=temporal
       - POSTGRES_PWD=temporal
       - POSTGRES_SEEDS=postgresql
-      # Add authorizer config
       - TEMPORAL_CLI_ADDRESS=0.0.0.0:7233
     volumes:
-      - ./temporal-config:/etc/temporal/config
+      - ./temporal-config:/etc/temporal/config/custom
     command: >
       sh -c "
-      /etc/temporal/entrypoint.sh --config /etc/temporal/config/auth.yaml
+      echo 'Loading custom Temporal configuration...' &&
+      ls -la /etc/temporal/config/custom/ &&
+      /etc/temporal/entrypoint.sh --config /etc/temporal/config/custom/auth.yaml
       "
     depends_on:
       - postgresql
