@@ -1,0 +1,22 @@
+# Dynamic configuration for authentication
+frontend.enableTokenNamespaceEnforcement:
+  - value: true
+    constraints: {}
+
+frontend.disallowQuery:
+  - value: true
+    constraints: {}
+
+system.enableAuthorization:
+  - value: true
+    constraints: {}
+
+# Make sure all operations require authentication
+frontend.enableClientVersionCheck:
+  - value: true
+    constraints: {}
+
+# Enforce authorization for all services
+system.authorizationEnabled:
+  - value: true
+    constraints: {} 

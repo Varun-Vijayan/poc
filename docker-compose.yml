@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Temporal server with simple authentication
+  # Temporal server with proper authorization
   temporal:
     image: temporalio/auto-setup:1.22.0
     ports:
@@ -12,13 +12,18 @@ services:
       - POSTGRES_USER=temporal
       - POSTGRES_PWD=temporal
       - POSTGRES_SEEDS=postgresql
-      # Enable authentication with a simple setup
-      - TEMPORAL_AUTH_ENABLED=true
-      - TEMPORAL_CLI_SHOW_STACKS=1
+      # Add authorizer config
+      - TEMPORAL_CLI_ADDRESS=0.0.0.0:7233
+    volumes:
+      - ./temporal-config:/etc/temporal/config
+    command: >
+      sh -c "
+      /etc/temporal/entrypoint.sh --config /etc/temporal/config/auth.yaml
+      "
     depends_on:
       - postgresql
 
-  # Temporal Web UI with auth
+  # Temporal Web UI
   temporal-web:
     image: temporalio/ui:2.21.3
     ports:
