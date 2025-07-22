@@ -15,11 +15,12 @@ services:
       - TEMPORAL_CLI_ADDRESS=0.0.0.0:7233
     volumes:
       - ./temporal-config:/etc/temporal/config/custom
-    command: >
+    entrypoint: >
       sh -c "
       echo 'Loading custom Temporal configuration...' &&
       ls -la /etc/temporal/config/custom/ &&
-      /etc/temporal/entrypoint.sh --config /etc/temporal/config/custom/auth.yaml
+      cat /etc/temporal/config/custom/auth.yaml &&
+      exec temporal-server --config /etc/temporal/config/custom/auth.yaml
       "
     depends_on:
       - postgresql
