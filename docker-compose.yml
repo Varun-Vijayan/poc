@@ -1,90 +1,121 @@
 version: '3.8'
 
 services:
-  # Temporal server with JWT authorization enforcement
-  temporal:
-    image: temporalio/auto-setup:1.22.0
+  postgresql:
+    container_name: temporal-postgresql
+    environment:
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_USER: temporal
+      POSTGRES_DB: temporal
+    image: postgres:13
+    networks:
+      - temporal-network
     ports:
-      - "0.0.0.0:7234:7233"   # Bind to all interfaces for remote access
+      - "5433:5432"
+    volumes:
+      - postgresql-data:/var/lib/postgresql/data
+
+  temporal:
+    container_name: temporal
+    depends_on:
+      - postgresql
+      - jwt-server
     environment:
       - DB=postgresql
       - DB_PORT=5432
       - POSTGRES_USER=temporal
       - POSTGRES_PWD=temporal
       - POSTGRES_SEEDS=postgresql
-      - TEMPORAL_CLI_ADDRESS=0.0.0.0:7233
-      - TEMPORAL_CONFIG_DIR=custom
-      - TEMPORAL_ENVIRONMENT=development
-      - TEMPORAL_ROOT=/etc/temporal
-      # Enable authorization flags
-      - TEMPORAL_AUTH_ENABLED=true
       - ENABLE_ES=false
+      - ES_SEEDS=
+      - ES_VERSION=v7
+      # Enable auto-setup first
+      - SKIP_SCHEMA_SETUP=false
+    image: temporalio/auto-setup:1.22.0
+    networks:
+      - temporal-network
+    ports:
+      - "0.0.0.0:7233:7233"
+      - "0.0.0.0:7234:7234"
     volumes:
-      - ./temporal-config:/etc/temporal/custom
+      - ./temporal-config:/etc/temporal/config/custom
+    # First run auto-setup to initialize DB, then restart with JWT
     entrypoint: >
       sh -c "
-      echo '🚀 Starting Temporal with JWT Authorization Enforcement' &&
-      echo '📁 Loading configuration from /etc/temporal/custom/development.yaml' &&
-      ls -la /etc/temporal/custom/ &&
-      echo '🔑 JWT Configuration:' &&
-      grep -A 10 'authorization:' /etc/temporal/custom/development.yaml &&
-      echo '🎯 Starting server with authorization enabled...' &&
-      cd /etc/temporal &&
-      exec temporal-server --env development --config custom start
-      "
-    depends_on:
-      - postgresql
-      - jwt-server
-
-  # Simple JWT server for JWKS endpoint
-  jwt-server:
-    image: nginx:alpine
-    ports:
-      - "8080:80"
-    volumes:
-      - ./temporal-config:/usr/share/nginx/html
-    command: >
-      sh -c "
-      mkdir -p /usr/share/nginx/html &&
-      cp /usr/share/nginx/html/jwks /usr/share/nginx/html/jwks.bak &&
-      echo 'JWKS file contents:' &&
-      cat /usr/share/nginx/html/jwks &&
-      nginx -g 'daemon off;'
+        echo '🚀 Starting Temporal Auto-Setup (Stage 1: Database Initialization)' &&
+        if [ ! -f /tmp/schema_initialized ]; then
+          echo '📁 Initializing database schema...' &&
+          temporal-server --env development start &
+          SETUP_PID=\$$! &&
+          sleep 45 &&
+          echo '✅ Database should be initialized, stopping setup server...' &&
+          kill \$$SETUP_PID || true &&
+          sleep 10 &&
+          touch /tmp/schema_initialized &&
+          echo '✅ Schema initialization complete'
+        fi &&
+        echo '🔑 Starting Temporal with JWT Authentication (Stage 2)...' &&
+        export TEMPORAL_CONFIG_DIR=custom &&
+        export TEMPORAL_ENVIRONMENT=development &&
+        export TEMPORAL_ROOT=/etc/temporal &&
+        ls -la /etc/temporal/config/custom/ &&
+        echo '🎯 Starting server with JWT config...' &&
+        exec temporal-server --env development --config custom start
       "
 
-  # Temporal Web UI
-  temporal-web:
-    image: temporalio/ui:2.21.3
-    ports:
-      - "0.0.0.0:8234:8080"   # Bind to all interfaces for remote access
-    environment:
-      - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
-    depends_on:
-      - temporal
-
-  # PostgreSQL database for Temporal
-  postgresql:
-    image: postgres:13
-    environment:
-      POSTGRES_PASSWORD: temporal
-      POSTGRES_USER: temporal
-      POSTGRES_DB: temporal
-    ports:
-      - "5433:5432"   # Changed from 5432 to 5433 to avoid conflicts
-    volumes:
-      - postgresql-data:/var/lib/postgresql/data
-
-  # Temporal Admin Tools (optional)
   temporal-admin-tools:
-    image: temporalio/admin-tools:1.22.0
+    container_name: temporal-admin-tools
     depends_on:
       - temporal
     environment:
       - TEMPORAL_CLI_ADDRESS=temporal:7233
+    image: temporalio/admin-tools:1.22.0
+    networks:
+      - temporal-network
     stdin_open: true
     tty: true
+
+  temporal-web:
+    container_name: temporal-web
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    image: temporalio/ui:2.21.3
+    networks:
+      - temporal-network
+    ports:
+      - "0.0.0.0:8234:8080"
+
+  jwt-server:
+    image: nginx:alpine
+    container_name: jwt-server
+    networks:
+      - temporal-network
+    ports:
+      - "0.0.0.0:8080:80"
+    volumes:
+      - ./temporal-config:/usr/share/nginx/html:ro
+    command: >
+      sh -c "
+        echo '🔑 Starting JWT JWKS Server...' &&
+        echo 'Creating JWKS endpoint at /jwks' &&
+        if [ -f /usr/share/nginx/html/jwks ]; then
+          echo '✅ JWKS file found, contents:' &&
+          cat /usr/share/nginx/html/jwks
+        else
+          echo '❌ JWKS file not found! Creating placeholder...' &&
+          echo '{\"keys\":[]}' > /usr/share/nginx/html/jwks
+        fi &&
+        nginx -g 'daemon off;'
+      "
 
 volumes:
   postgresql-data:
   temporal-data:
+
+networks:
+  temporal-network:
+    driver: bridge
+    name: temporal-network
