@@ -13,16 +13,19 @@ services:
       - POSTGRES_PWD=temporal
       - POSTGRES_SEEDS=postgresql
       - TEMPORAL_CLI_ADDRESS=0.0.0.0:7233
+      - TEMPORAL_CONFIG_DIR=/etc/temporal/config/custom
+      - TEMPORAL_ENVIRONMENT=development
     volumes:
       - ./temporal-config:/etc/temporal/config/custom
     entrypoint: >
       sh -c "
       echo 'Loading custom Temporal configuration...' &&
       ls -la /etc/temporal/config/custom/ &&
-      echo 'Config file contents:' &&
+      echo 'Config file contents (first 20 lines):' &&
       head -20 /etc/temporal/config/custom/auth.yaml &&
+      echo 'Setting config directory to: /etc/temporal/config/custom' &&
       echo 'Starting Temporal server with custom config...' &&
-      exec temporal-server start --config /etc/temporal/config/custom/auth.yaml
+      exec temporal-server start
       "
     depends_on:
       - postgresql
