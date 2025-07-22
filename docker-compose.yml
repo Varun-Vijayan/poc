@@ -29,10 +29,6 @@ services:
       - ENABLE_ES=false
       - ES_SEEDS=
       - ES_VERSION=v7
-      # Enable JWT authentication
-      - TEMPORAL_CONFIG_DIR=custom
-      - TEMPORAL_ENVIRONMENT=development
-      - TEMPORAL_ROOT=/etc/temporal
     image: temporalio/auto-setup:1.22.0
     networks:
       - temporal-network
@@ -40,17 +36,20 @@ services:
       - "0.0.0.0:7233:7233"
       - "0.0.0.0:7234:7234"
     volumes:
-      - ./temporal-config:/etc/temporal/custom
-    # Start with JWT authentication enabled
-    command: >
+      - ./temporal-config:/etc/temporal/config/custom
+    # Fixed: Use the correct config path
+    entrypoint: >
       sh -c "
         echo '🚀 Starting Temporal with JWT Authentication' &&
         echo '⏳ Waiting for PostgreSQL and JWT server...' &&
         sleep 10 &&
         echo '📁 Config directory contents:' &&
-        ls -la /etc/temporal/custom/ &&
-        echo '🔑 Starting Temporal server with JWT config...' &&
-        exec temporal-server --env development --config custom start
+        ls -la /etc/temporal/config/custom/ &&
+        echo '🔑 Starting server with development config...' &&
+        export TEMPORAL_CONFIG_DIR=/etc/temporal/config/custom &&
+        export TEMPORAL_ENVIRONMENT=development &&
+        cd /etc/temporal &&
+        exec temporal-server --env development --config config/custom start
       "
 
   temporal-admin-tools:
