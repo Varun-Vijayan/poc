@@ -19,8 +19,10 @@ services:
       sh -c "
       echo 'Loading custom Temporal configuration...' &&
       ls -la /etc/temporal/config/custom/ &&
-      cat /etc/temporal/config/custom/auth.yaml &&
-      exec temporal-server --config /etc/temporal/config/custom/auth.yaml
+      echo 'Config file contents:' &&
+      head -20 /etc/temporal/config/custom/auth.yaml &&
+      echo 'Starting Temporal server with custom config...' &&
+      exec temporal-server start --config /etc/temporal/config/custom/auth.yaml
       "
     depends_on:
       - postgresql
