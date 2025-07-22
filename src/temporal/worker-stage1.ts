@@ -1,5 +1,6 @@
 import { Worker, NativeConnection } from '@temporalio/worker';
 import * as stage1Activities from './activities-stage1';
+import * as fs from 'fs';
 
 async function run() {
   console.log('=== TEMPORAL WORKER 1 (VALIDATION & INITIAL) STARTING ===');
@@ -10,6 +11,18 @@ async function run() {
     const rawAddress = process.env.TEMPORAL_ADDRESS || 'localhost:7233';
     console.log('🔍 Raw address:', rawAddress);
     
+    // MANDATORY: Load JWT token for authentication
+    let jwtToken: string;
+    try {
+      jwtToken = fs.readFileSync('./src/auth/admin-token.jwt', 'utf8').trim();
+      console.log('🔑 JWT token loaded successfully (first 50 chars):', jwtToken.substring(0, 50) + '...');
+    } catch (error) {
+      console.error('❌ AUTHENTICATION REQUIRED: JWT token not found!');
+      console.error('   Expected file: ./src/auth/admin-token.jwt');
+      console.error('   Generate tokens with: node src/auth/generate-jwt.js');
+      process.exit(1);
+    }
+
     // Parse the address to handle Codespace HTTPS URLs
     let address: string;
     let useTLS = false;
@@ -34,15 +47,19 @@ async function run() {
     
     console.log('🔍 Connecting to:', address, useTLS ? '(with TLS)' : '(without TLS)');
     
-    // Create connection to Temporal server
+    // Create connection to Temporal server with MANDATORY JWT authentication
     const connectionOptions: any = {
       address: address,
-      ...(useTLS ? { tls: {} } : {})
+      ...(useTLS ? { tls: {} } : {}),
+      // JWT authentication is REQUIRED
+      metadata: {
+        'authorization': `Bearer ${jwtToken}`
+      }
     };
     
     const connection = await NativeConnection.connect(connectionOptions);
     
-    console.log('✅ Connection established successfully');
+    console.log('✅ Connection established with JWT authentication');
 
     // Create a Worker to run Workflows and Activities
     const worker = await Worker.create({
@@ -52,12 +69,16 @@ async function run() {
       taskQueue: 'xflow-stage1-queue',
     });
 
-    console.log('✅ Stage 1 Worker started successfully!');
+    console.log('✅ Stage 1 Worker started successfully with JWT authentication!');
     console.log('Worker listening on task queue: xflow-stage1-queue');
     console.log('Handles: VALIDATE_INPUT, SANITIZE_DATA, CHECK_PERMISSIONS');
     await worker.run();
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Stage 1 Worker startup failed:', error);
+    if (error.message?.includes('authentication') || error.message?.includes('authorization')) {
+      console.error('🔐 AUTHENTICATION ERROR: Invalid or missing JWT token');
+      console.error('   Make sure to generate valid tokens with: node src/auth/generate-jwt.js');
+    }
     process.exit(1);
   }
 }

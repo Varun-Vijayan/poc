@@ -19,6 +19,7 @@ services:
     container_name: temporal
     depends_on:
       - postgresql
+      - jwt-server
     environment:
       - DB=postgresql
       - DB_PORT=5432
@@ -28,12 +29,29 @@ services:
       - ENABLE_ES=false
       - ES_SEEDS=
       - ES_VERSION=v7
+      # Enable JWT authentication
+      - TEMPORAL_CONFIG_DIR=custom
+      - TEMPORAL_ENVIRONMENT=development
+      - TEMPORAL_ROOT=/etc/temporal
     image: temporalio/auto-setup:1.22.0
     networks:
       - temporal-network
     ports:
       - "0.0.0.0:7233:7233"
       - "0.0.0.0:7234:7234"
+    volumes:
+      - ./temporal-config:/etc/temporal/custom
+    # Start with JWT authentication enabled
+    command: >
+      sh -c "
+        echo '🚀 Starting Temporal with JWT Authentication' &&
+        echo '⏳ Waiting for PostgreSQL and JWT server...' &&
+        sleep 10 &&
+        echo '📁 Config directory contents:' &&
+        ls -la /etc/temporal/custom/ &&
+        echo '🔑 Starting Temporal server with JWT config...' &&
+        exec temporal-server --env development --config custom start
+      "
 
   temporal-admin-tools:
     container_name: temporal-admin-tools

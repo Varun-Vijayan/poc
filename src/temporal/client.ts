@@ -2,6 +2,7 @@ import { Client, Connection } from '@temporalio/client';
 import { executeWorkflow } from './workflows';
 import type { WorkflowExecutionInput } from './workflows';
 import { executeDistributedWorkflow } from './workflows-distributed';
+import * as fs from 'fs';
 
 export class TemporalClient {
   private client: Client | null = null;
@@ -9,8 +10,24 @@ export class TemporalClient {
 
   async getClient(): Promise<Client> {
     if (!this.client) {
+      // MANDATORY: Load JWT token for authentication
+      let jwtToken: string;
+      try {
+        jwtToken = fs.readFileSync('./src/auth/admin-token.jwt', 'utf8').trim();
+        console.log('🔑 Temporal client using JWT authentication');
+      } catch (error) {
+        console.error('❌ AUTHENTICATION REQUIRED: JWT token not found for Temporal client!');
+        console.error('   Expected file: ./src/auth/admin-token.jwt');
+        console.error('   Generate tokens with: node src/auth/generate-jwt.js');
+        throw new Error('JWT authentication required for Temporal client operations');
+      }
+
       this.connection = await Connection.connect({
         address: process.env.TEMPORAL_ADDRESS || 'localhost:7233',
+        // JWT authentication is REQUIRED for all client operations
+        metadata: {
+          'authorization': `Bearer ${jwtToken}`
+        }
       });
       
       this.client = new Client({
