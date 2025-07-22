@@ -10,7 +10,7 @@ export class TemporalClient {
   async getClient(): Promise<Client> {
     if (!this.client) {
       this.connection = await Connection.connect({
-        address: process.env.TEMPORAL_ADDRESS || 'localhost:7234',
+        address: process.env.TEMPORAL_ADDRESS || 'localhost:7233',
       });
       
       this.client = new Client({
