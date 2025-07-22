@@ -92,5 +92,5 @@ archival:
     state: "disabled"
 
 dynamicConfigClient:
-  filepath: "/etc/temporal/custom/dynamicconfig"
+  filepath: "/etc/temporal/config/custom/dynamicconfig"
   pollInterval: "10s" 
