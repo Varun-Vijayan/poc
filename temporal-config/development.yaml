@@ -33,6 +33,12 @@ global:
     name: temporal
     maxJoinDuration: 30s
     broadcastAddress: "0.0.0.0"
+  authorization:
+    jwtKeyProvider:
+      keySourceURIs: ["http://jwt-server:80/jwks"]
+      refreshInterval: "1h"
+    permissionsClaimName: "permissions"
+    authorizer: "default"
 
 services:
   frontend:
@@ -41,12 +47,6 @@ services:
       membershipPort: 6933
       bindOnLocalHost: false
       bindOnIP: "0.0.0.0"
-    # Enable authentication
-    authorization:
-      jwtKeyProvider:
-        keySourceURIs: []
-      permissionsClaimName: "permissions"
-      authorizer: "default"
     
   matching:
     rpc:

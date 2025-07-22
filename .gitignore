@@ -26,7 +26,6 @@ yarn-error.log*
 
 # local env files
 .env*.local
-.env
 
 # vercel
 .vercel
@@ -35,17 +34,14 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Temporal
-/.temporal
+# JWT Authentication Files - NEVER COMMIT THESE
+src/auth/jwt-private.pem
+src/auth/jwt-public.pem
+src/auth/*.jwt
+src/auth/*-token.jwt
+temporal-config/jwks
+temporal-config/jwks.bak
 
-# Docker
-docker-compose.override.yml
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-Thumbs.db
+# Temporal logs and temp files
+temporal-data/
+*.temporal-logs

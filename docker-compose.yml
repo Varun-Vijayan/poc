@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Temporal server with config file authentication
+  # Temporal server with JWT authorization enforcement
   temporal:
     image: temporalio/auto-setup:1.22.0
     ports:
@@ -16,24 +16,41 @@ services:
       - TEMPORAL_CONFIG_DIR=custom
       - TEMPORAL_ENVIRONMENT=development
       - TEMPORAL_ROOT=/etc/temporal
+      # Enable authorization flags
+      - TEMPORAL_AUTH_ENABLED=true
+      - ENABLE_ES=false
     volumes:
       - ./temporal-config:/etc/temporal/custom
     entrypoint: >
       sh -c "
-      echo 'Loading custom Temporal configuration...' &&
+      echo '🚀 Starting Temporal with JWT Authorization Enforcement' &&
+      echo '📁 Loading configuration from /etc/temporal/custom/development.yaml' &&
       ls -la /etc/temporal/custom/ &&
-      echo 'Config template contents (first 20 lines):' &&
-      head -20 /etc/temporal/custom/config_template.yaml &&
-      echo 'Environment variables:' &&
-      echo 'TEMPORAL_ROOT=/etc/temporal' &&
-      echo 'TEMPORAL_CONFIG_DIR=custom' &&
-      echo 'TEMPORAL_ENVIRONMENT=development' &&
-      echo 'Starting Temporal server with environment config...' &&
+      echo '🔑 JWT Configuration:' &&
+      grep -A 10 'authorization:' /etc/temporal/custom/development.yaml &&
+      echo '🎯 Starting server with authorization enabled...' &&
       cd /etc/temporal &&
-      exec temporal-server start
+      exec temporal-server --env development --config custom start
       "
     depends_on:
       - postgresql
+      - jwt-server
+
+  # Simple JWT server for JWKS endpoint
+  jwt-server:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./temporal-config:/usr/share/nginx/html
+    command: >
+      sh -c "
+      mkdir -p /usr/share/nginx/html &&
+      cp /usr/share/nginx/html/jwks /usr/share/nginx/html/jwks.bak &&
+      echo 'JWKS file contents:' &&
+      cat /usr/share/nginx/html/jwks &&
+      nginx -g 'daemon off;'
+      "
 
   # Temporal Web UI
   temporal-web:

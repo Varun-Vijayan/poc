@@ -2,69 +2,86 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const crypto = require('crypto');
 
-// Generate RSA key pair for testing with correct format
-const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
-  modulusLength: 2048,
-  publicKeyEncoding: {
-    type: 'pkcs1',
-    format: 'pem'
-  },
-  privateKeyEncoding: {
-    type: 'pkcs1',
-    format: 'pem'
-  }
-});
+// Read or generate RSA key pair
+let privateKey, publicKey;
 
-console.log('Generated RSA Key Pair');
-console.log('Private Key:\n', privateKey);
-console.log('Public Key:\n', publicKey);
-
-// Save keys for reference
-fs.writeFileSync('private-key.pem', privateKey);
-fs.writeFileSync('public-key.pem', publicKey);
-
-function generateWorkerToken(workerId, permissions = ['default:read', 'default:write']) {
-  const payload = {
-    sub: workerId,
-    iss: 'temporal-auth-service',
-    aud: 'temporal-server',
-    exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60), // 24 hours
-    iat: Math.floor(Date.now() / 1000),
-    permissions: permissions,
-    worker_identity: workerId
-  };
-
-  console.log(`Generating token for ${workerId}...`);
-  
-  const token = jwt.sign(payload, privateKey, {
-    algorithm: 'RS256',
-    keyid: 'temporal-key'
+try {
+  privateKey = fs.readFileSync('./src/auth/jwt-private.pem', 'utf8');
+  publicKey = fs.readFileSync('./src/auth/jwt-public.pem', 'utf8');
+  console.log('✅ Using existing RSA key pair');
+} catch (error) {
+  console.log('🔑 Generating new RSA key pair...');
+  const { publicKey: pubKey, privateKey: privKey } = crypto.generateKeyPairSync('rsa', {
+    modulusLength: 2048,
+    publicKeyEncoding: {
+      type: 'spki',
+      format: 'pem'
+    },
+    privateKeyEncoding: {
+      type: 'pkcs8',
+      format: 'pem'
+    }
   });
-
-  return token;
+  
+  privateKey = privKey;
+  publicKey = pubKey;
+  
+  // Save keys
+  fs.writeFileSync('./src/auth/jwt-private.pem', privateKey);
+  fs.writeFileSync('./src/auth/jwt-public.pem', publicKey);
+  console.log('✅ RSA key pair generated and saved');
 }
 
-// Generate tokens for different workers
-console.log('\nGenerating tokens...');
-const tokens = {
-  'local-worker-stage3': generateWorkerToken('local-worker-stage3'),
-  'codespace-worker-stage1': generateWorkerToken('codespace-worker-stage1'),
-  'codespace-worker-stage2': generateWorkerToken('codespace-worker-stage2')
-};
+// Generate JWT with format expected by Temporal default ClaimMapper
+function generateTemporalJWT(permissions = ['default:admin']) {
+  const payload = {
+    // Required claims
+    "iss": "xflow-temporal-server",
+    "aud": ["temporal-service"],
+    "exp": Math.floor(Date.now() / 1000) + (60 * 60), // 1 hour expiration
+    "iat": Math.floor(Date.now() / 1000),
+    "sub": "worker-client",
+    
+    // Temporal-specific permissions claim
+    "permissions": permissions
+  };
 
-console.log('\nGenerated JWT Tokens:');
-console.log('===================');
-Object.entries(tokens).forEach(([worker, token]) => {
-  console.log(`\n${worker}:`);
-  console.log(token);
-});
+  const options = {
+    algorithm: 'RS256',
+    keyid: 'temporal-key'
+  };
 
-// Save tokens to files
-Object.entries(tokens).forEach(([worker, token]) => {
-  fs.writeFileSync(`${worker}-token.jwt`, token);
-});
+  return jwt.sign(payload, privateKey, options);
+}
 
-console.log('\n✅ Tokens saved to individual files');
-console.log('✅ Keys saved as private-key.pem and public-key.pem');
+// Generate tokens for different scenarios
+console.log('\n=== GENERATING TEMPORAL JWT TOKENS ===\n');
 
-module.exports = { generateWorkerToken, tokens, privateKey, publicKey };
+// 1. Valid token with admin permissions
+const adminToken = generateTemporalJWT(['default:admin']);
+console.log('1. ADMIN TOKEN (should work):');
+console.log(`Bearer ${adminToken}`);
+console.log('\nDecoded payload:', jwt.decode(adminToken));
+
+// 2. Valid token with read-only permissions  
+const readerToken = generateTemporalJWT(['default:read']);
+console.log('\n2. READER TOKEN (should work):');
+console.log(`Bearer ${readerToken}`);
+
+// 3. Valid token with multiple namespace permissions
+const multiToken = generateTemporalJWT(['default:admin', 'temporal-system:read']);
+console.log('\n3. MULTI-NAMESPACE TOKEN (should work):');
+console.log(`Bearer ${multiToken}`);
+
+// Save tokens to files for easy worker testing
+fs.writeFileSync('./src/auth/admin-token.jwt', adminToken);
+fs.writeFileSync('./src/auth/reader-token.jwt', readerToken);
+fs.writeFileSync('./src/auth/multi-token.jwt', multiToken);
+
+console.log('\n✅ Tokens saved to ./src/auth/');
+console.log('   - admin-token.jwt (default:admin)');
+console.log('   - reader-token.jwt (default:read)');  
+console.log('   - multi-token.jwt (multiple namespaces)');
+
+console.log('\n🧪 TEST WITH:');
+console.log('   docker exec xflow-poc-temporal-1 temporal workflow list --address localhost:7233 --header "authorization=Bearer ' + adminToken + '"');

@@ -1,5 +1,6 @@
 import { Worker, NativeConnection } from '@temporalio/worker';
 import * as stage3Activities from './activities-stage3';
+import * as fs from 'fs';
 
 async function run() {
   console.log('=== TEMPORAL WORKER 3 (FINAL PROCESSING & NOTIFICATIONS) STARTING ===');
@@ -11,16 +12,23 @@ async function run() {
   try {
     console.log('🔍 Connecting to:', process.env.TEMPORAL_ADDRESS);
     
-    // Create connection to Temporal server (simplified for testing)
+    // Load the admin JWT token for authentication testing
+    const adminToken = fs.readFileSync('./src/auth/admin-token.jwt', 'utf8');
+    console.log('🔑 Using admin JWT token (first 50 chars):', adminToken.substring(0, 50) + '...');
+    
+    // Create connection to Temporal server with VALID JWT
     const connection = await NativeConnection.connect({
       address: process.env.TEMPORAL_ADDRESS || 'localhost:7234',
       // Enable TLS if connecting to HTTPS Codespace URL
       ...(process.env.TEMPORAL_ADDRESS?.includes('github.dev') ? {
         tls: {}
       } : {}),
+      metadata: {
+        'authorization': `Bearer ${adminToken}`
+      }
     });
     
-    console.log('✅ Connection established');
+    console.log('✅ Connection established WITH VALID JWT TOKEN');
 
     // Create a Worker to run Workflows and Activities
     const worker = await Worker.create({
@@ -30,7 +38,7 @@ async function run() {
       taskQueue: 'xflow-stage3-queue',
     });
 
-    console.log('✅ Stage 3 Worker started successfully!');
+    console.log('✅ Stage 3 Worker started successfully WITH VALID JWT!');
     console.log('Worker listening on task queue: xflow-stage3-queue');
     console.log('Handles: SEND_EMAIL_NOTIFICATION, LOG_EVENT, DELAY');
     await worker.run();

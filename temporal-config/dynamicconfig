@@ -1,22 +1,27 @@
-# Dynamic configuration for authentication
+# Enable authorization system - proper YAML format
+system.enableAuthorization:
+  - value: true
+    constraints: {}
+
+system.authorizationEnabled:
+  - value: true
+    constraints: {}
+
+# Frontend authorization settings
 frontend.enableTokenNamespaceEnforcement:
   - value: true
     constraints: {}
 
 frontend.disallowQuery:
+  - value: false
+    constraints: {}
+
+# Force the use of the default authorizer instead of nopAuthority
+system.enableAuthorizer:
   - value: true
     constraints: {}
 
-system.enableAuthorization:
-  - value: true
-    constraints: {}
-
-# Make sure all operations require authentication
-frontend.enableClientVersionCheck:
-  - value: true
-    constraints: {}
-
-# Enforce authorization for all services
-system.authorizationEnabled:
+# JWT-specific settings
+authorization.defaultAuthorizerEnabled:
   - value: true
     constraints: {} 
