@@ -1,0 +1,12 @@
+{
+  "keys": [
+    {
+      "kty": "RSA",
+      "kid": "temporal-key",
+      "use": "sig",
+      "alg": "RS256",
+      "n": "1o1pOjP6F0RKwTrVzRy71fk4V6k71s0ocS5OliumcIBlNfpmcNtALRzahqbFU7OW1qRq3NrlsbSG9uEIGcE1BWomQdtykFg1zB4d04phelGqYA-WVw5i7jpUnLdW5xsD27h9jlLvN9WmOpHur00KwENCX7fpuOkeZr_MVT5NEEu33V28iDIXCyxXLA2V263R3F_8JwAMJd-7m5mZZAgWDa7U0l20dHKR091nPVec3yip0nP1RNWvCvyifL0ThYO3dpMb3nHLbBMBUFJ7zpr_mwA5wqtMSYAqkQ3QPHUd5IASNsSf-n4u-q5CEvyYj8Xxuxdn1_ng2nAk_p6kG7j9sQ",
+      "e": "AQAB"
+    }
+  ]
+}
