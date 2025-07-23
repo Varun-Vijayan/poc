@@ -23,9 +23,9 @@ fs.writeFileSync('./src/auth/jwt-public.pem', publicKey);
 // Generate JWKS (JSON Web Key Set) for the JWT server
 console.log('🔐 Generating JWKS for JWT server...');
 
-// Extract public key components for JWKS
-const publicKeyObj = crypto.createPublicKey(publicKey);
-const keyDetails = publicKeyObj.asymmetricKeyDetails;
+// Extract RSA public key components using crypto.createPublicKey
+const keyObject = crypto.createPublicKey(publicKey);
+const jwkData = keyObject.export({ format: 'jwk' });
 
 // Create JWKS
 const jwks = {
@@ -35,8 +35,8 @@ const jwks = {
       kid: "temporal-key",
       use: "sig",
       alg: "RS256",
-      n: publicKeyObj.export({ format: 'jwk' }).n,
-      e: publicKeyObj.export({ format: 'jwk' }).e
+      n: jwkData.n,
+      e: jwkData.e
     }
   ]
 };
@@ -48,15 +48,16 @@ fs.writeFileSync('./temporal-config/jwks', jwksJson);
 console.log('✅ RSA key pair generated and saved');
 console.log('✅ JWKS file created at ./temporal-config/jwks');
 
-console.log('\n=== GENERATING TEMPORAL JWT TOKENS ===\n');
+console.log('\n=== GENERATING TEMPORAL JWT TOKEN ===\n');
 
-// Common claims for all tokens
-const basePayload = {
+// Token configuration
+const tokenPayload = {
   iss: 'xflow-temporal-server',
   aud: ['temporal-service'],
   exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24), // 24 hours
   iat: Math.floor(Date.now() / 1000),
-  sub: 'worker-client'
+  sub: 'worker-client',
+  permissions: ['default:admin']
 };
 
 const signOptions = {
@@ -64,50 +65,23 @@ const signOptions = {
   keyid: 'temporal-key'
 };
 
-// 1. Admin token (should work for everything)
-const adminPayload = {
-  ...basePayload,
-  permissions: ['default:admin']
-};
-
-const adminToken = jwt.sign(adminPayload, privateKey, signOptions);
+// Generate single admin token for all workers and client
+const adminToken = jwt.sign(tokenPayload, privateKey, signOptions);
 fs.writeFileSync('./src/auth/admin-token.jwt', adminToken);
 
-console.log('1. ADMIN TOKEN (should work):');
+console.log('🔑 ADMIN TOKEN (used by all workers and client):');
 console.log(`Bearer ${adminToken}`);
 console.log('\nDecoded payload:', jwt.decode(adminToken));
 
-// 2. Reader token (limited permissions)
-const readerPayload = {
-  ...basePayload,
-  permissions: ['default:read']
-};
-
-const readerToken = jwt.sign(readerPayload, privateKey, signOptions);
-fs.writeFileSync('./src/auth/reader-token.jwt', readerToken);
-
-console.log('\n2. READER TOKEN (should work):');
-console.log(`Bearer ${readerToken}`);
-
-// 3. Multi-namespace token
-const multiPayload = {
-  ...basePayload,
-  permissions: ['default:admin', 'temporal-system:read']
-};
-
-const multiToken = jwt.sign(multiPayload, privateKey, signOptions);
-fs.writeFileSync('./src/auth/multi-token.jwt', multiToken);
-
-console.log('\n3. MULTI-NAMESPACE TOKEN (should work):');
-console.log(`Bearer ${multiToken}`);
-
-console.log('\n✅ Tokens saved to ./src/auth/');
-console.log('   - admin-token.jwt (default:admin)');
-console.log('   - reader-token.jwt (default:read)');
-console.log('   - multi-token.jwt (multiple namespaces)');
-
-console.log('\n✅ JWKS saved to ./temporal-config/jwks');
+console.log('\n✅ Token saved to ./src/auth/admin-token.jwt');
+console.log('✅ JWKS saved to ./temporal-config/jwks');
 console.log('   - Available at http://localhost:8080/jwks');
 
 console.log('\n🧪 TEST WITH:');
 console.log(`   docker exec temporal temporal workflow list --address localhost:7233 --header "authorization=Bearer ${adminToken}"`);
+
+console.log('\n🎯 USAGE:');
+console.log('   - All workers use: ./src/auth/admin-token.jwt');
+console.log('   - Frontend client uses: ./src/auth/admin-token.jwt');
+console.log('   - Token expires in 24 hours');
+console.log('   - Re-run this script to generate new tokens');
