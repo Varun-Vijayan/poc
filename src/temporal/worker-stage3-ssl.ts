@@ -60,12 +60,11 @@ async function run() {
     const connectionOptions: any = {
       address: address,
       tls: {
+        serverRootCACertificate: fs.readFileSync('./certs/ca.pem'),
         clientCertPair: {
-          crt: Buffer.from(clientCert),
-          key: Buffer.from(clientKey)
-        },
-        serverNameOverride: 'temporal-server', // Must match certificate CN
-        serverRootCACertificate: Buffer.from(caCert)
+          crt: fs.readFileSync('./certs/worker-client.pem'),
+          key: fs.readFileSync('./certs/worker-client-key.pem')
+        }
       },
       metadata: {
         'authorization': `Bearer ${jwtToken}`

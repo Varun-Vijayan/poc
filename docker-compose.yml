@@ -29,6 +29,8 @@ services:
       - ENABLE_ES=false
       - ES_SEEDS=
       - ES_VERSION=v7
+      - TLS=true
+      - TLS_REQUIRE_CLIENT_AUTH=true
     image: temporalio/auto-setup:1.22.0
     networks:
       - temporal-network

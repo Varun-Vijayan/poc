@@ -42,15 +42,30 @@ global:
   tls:
     internode:
       server:
-        requireClientAuth: true
         certFile: "/etc/temporal/certs/temporal-server.pem"
         keyFile: "/etc/temporal/certs/temporal-server-key.pem"
-        clientCaFiles: ["/etc/temporal/certs/ca.pem"]
+        requireClientAuth: true
+        clientCaFiles:
+          - "/etc/temporal/certs/ca.pem"
       client:
-        serverName: "temporal-server"
-        certFile: "/etc/temporal/certs/worker-client.pem"
-        keyFile: "/etc/temporal/certs/worker-client-key.pem"
-        serverRootCaFiles: ["/etc/temporal/certs/ca.pem"]
+        serverName: "temporal"
+        rootCaFiles:
+          - "/etc/temporal/certs/ca.pem"
+    frontend:
+      server:
+        certFile: "/etc/temporal/certs/temporal-server.pem"
+        keyFile: "/etc/temporal/certs/temporal-server-key.pem"
+        requireClientAuth: true
+        clientCaFiles:
+          - "/etc/temporal/certs/ca.pem"
+      client:
+        serverName: "temporal"
+        rootCaFiles:
+          - "/etc/temporal/certs/ca.pem"
+
+# CRITICAL: Disable internal worker manager completely
+workerManager:
+  disable: true
 
 services:
   frontend:
@@ -59,26 +74,21 @@ services:
       membershipPort: 6933
       bindOnLocalHost: false
       bindOnIP: "0.0.0.0"
-      tls:
-        certFile: "/etc/temporal/certs/temporal-server.pem"
-        keyFile: "/etc/temporal/certs/temporal-server-key.pem"
-        requireClientAuth: true
-        clientCaFiles: ["/etc/temporal/certs/ca.pem"]
-    
+  
   matching:
     rpc:
       grpcPort: 7235
       membershipPort: 6935
       bindOnLocalHost: false
       bindOnIP: "0.0.0.0"
-
+  
   history:
     rpc:
       grpcPort: 7234
       membershipPort: 6934
       bindOnLocalHost: false
       bindOnIP: "0.0.0.0"
-
+  
   worker:
     rpc:
       grpcPort: 7239
@@ -110,4 +120,4 @@ archival:
 
 dynamicConfigClient:
   filepath: "/etc/temporal/config/custom/dynamicconfig"
-  pollInterval: "10s" 
+  pollInterval: "10s"
