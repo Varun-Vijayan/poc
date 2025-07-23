@@ -15,6 +15,8 @@
     "temporal:worker1:ssl": "dotenv -e .env.local -- ts-node src/temporal/worker-stage1-ssl.ts",
     "temporal:worker2:ssl": "dotenv -e .env.local -- ts-node src/temporal/worker-stage2-ssl.ts",
     "temporal:worker3:ssl": "dotenv -e .env.local -- ts-node src/temporal/worker-stage3-ssl.ts",
+    "temporal:worker3:client": "dotenv -e .env.local -- ts-node src/temporal/worker-stage3-client.ts",
+    "temporal:test-connection": "dotenv -e .env.local -- node scripts/test-connection.js",
     "temporal:production-workers": "concurrently \"npm run temporal:worker1:ssl\" \"npm run temporal:worker2:ssl\"",
     "temporal:start-production": "npm run temporal:production-workers",
     "temporal:all-workers": "concurrently \"npm run temporal:worker1\" \"npm run temporal:worker2\" \"npm run temporal:worker3\"",
