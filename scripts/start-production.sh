@@ -14,7 +14,7 @@ echo "🔑 Step 1: Generating JWT tokens and SSL certificates..."
 node src/auth/generate-jwt.js
 node src/auth/generate-ssl-certificates.js
 
-# Step 2: Start Temporal server and infrastructure
+# Step 2: Start Temporal server and infrastructure ONLY
 echo "🐳 Step 2: Starting Temporal server and infrastructure..."
 docker-compose down
 docker-compose up -d
@@ -36,27 +36,10 @@ else
     echo "   ❌ JWKS endpoint is not accessible"
 fi
 
-# Step 5: Start production workers (Stage 1 & 2)
-echo "👷 Step 5: Starting production workers (Stage 1 & 2)..."
-echo "   Starting workers in background..."
+# Test Temporal server
+echo "   🔍 Testing Temporal server..."
+curl -I http://localhost:7233 2>&1 | grep -q "HTTP/0.9" && echo "   ✅ Temporal server is responding" || echo "   ❌ Temporal server not responding"
 
-# Set environment for workers
-export TEMPORAL_ADDRESS="localhost:7233"
-
-# Start workers in background with logging
-nohup npm run temporal:worker1:ssl > worker1.log 2>&1 &
-WORKER1_PID=$!
-echo "   ✅ Worker 1 started (PID: $WORKER1_PID)"
-
-nohup npm run temporal:worker2:ssl > worker2.log 2>&1 &
-WORKER2_PID=$!
-echo "   ✅ Worker 2 started (PID: $WORKER2_PID)"
-
-# Save PIDs for later cleanup
-echo $WORKER1_PID > worker1.pid
-echo $WORKER2_PID > worker2.pid
-
-# Step 6: Display connection information
 echo ""
 echo "🌐 Production Environment Ready!"
 echo "================================="
@@ -67,10 +50,10 @@ echo "   - Temporal UI: localhost:8234"
 echo "   - JWKS Server: localhost:8080"
 echo "   - PostgreSQL: localhost:5433"
 echo ""
-echo "👷 Workers Running:"
-echo "   - Stage 1 Worker: Active (PID: $WORKER1_PID)"
-echo "   - Stage 2 Worker: Active (PID: $WORKER2_PID)"
-echo "   - Stage 3 Worker: EXTERNAL (for client connections)"
+echo "👷 Manual Worker Commands:"
+echo "   npm run temporal:worker1:ssl  # Stage 1 worker"
+echo "   npm run temporal:worker2:ssl  # Stage 2 worker"
+echo "   npm run temporal:worker3:ssl  # Stage 3 worker (for testing)"
 echo ""
 echo "🔗 For External Connections:"
 echo "   1. Make port 7233 PUBLIC in Codespaces"
@@ -83,8 +66,6 @@ echo "   - certs/ca.pem"
 echo "   - certs/worker-client.pem"
 echo "   - certs/worker-client-key.pem"
 echo ""
-echo "📝 Worker Logs:"
-echo "   - Worker 1: tail -f worker1.log"
-echo "   - Worker 2: tail -f worker2.log"
+echo "📦 Export client files: ./scripts/export-client-files.sh"
 echo ""
-echo "🛑 To stop workers: ./scripts/stop-production.sh" 
+echo "🛑 To stop services: docker-compose down" 
