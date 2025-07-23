@@ -1,0 +1,16 @@
+
+> xflow-poc@0.1.0 temporal:worker2:ssl
+> dotenv -e .env.local -- ts-node src/temporal/worker-stage2-ssl.ts
+
+=== TEMPORAL WORKER 2 (SSL + JWT) STARTING ===
+Environment variables loaded:
+TEMPORAL_ADDRESS: localhost:7233
+🔍 Raw address: localhost:7233
+🔑 JWT token loaded successfully (first 50 chars): eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InRlbX...
+🔐 SSL certificates loaded successfully
+🏠 Using local address with mTLS: localhost:7233
+🔍 Connecting to: localhost:7233 (with mTLS + JWT)
+❌ Stage 2 Worker startup failed: TransportError: tonic::transport::Error(Transport, InvalidCertificate(Other(OtherError(UnsupportedCertVersion))))
+    at Function.connect (/workspaces/poc/node_modules/@temporalio/worker/src/connection.ts:178:15)
+    at async run (/workspaces/poc/src/temporal/worker-stage2-ssl.ts:73:24)
+   Make sure to generate certificates with: node src/auth/generate-ssl-certificates.js

@@ -1,0 +1,28 @@
+
+> xflow-poc@0.1.0 temporal:worker1:ssl
+> dotenv -e .env.local -- ts-node src/temporal/worker-stage1-ssl.ts
+
+node:internal/modules/cjs/loader:1404
+  throw err;
+  ^
+
+Error: Cannot find module './worker-stage1-ssl.ts'
+Require stack:
+- /workspaces/poc/src/temporal/imaginaryUncacheableRequireResolveScript
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1401:15)
+    at Function.resolve (node:internal/modules/helpers:145:19)
+    at requireResolveNonCached (/workspaces/poc/node_modules/ts-node/dist/bin.js:549:16)
+    at getProjectSearchDir (/workspaces/poc/node_modules/ts-node/dist/bin.js:519:40)
+    at phase3 (/workspaces/poc/node_modules/ts-node/dist/bin.js:267:27)
+    at bootstrap (/workspaces/poc/node_modules/ts-node/dist/bin.js:47:30)
+    at main (/workspaces/poc/node_modules/ts-node/dist/bin.js:33:12)
+    at Object.<anonymous> (/workspaces/poc/node_modules/ts-node/dist/bin.js:579:5)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/workspaces/poc/src/temporal/imaginaryUncacheableRequireResolveScript'
+  ]
+}
+
+Node.js v22.17.0
