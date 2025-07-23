@@ -33,14 +33,14 @@ services:
     networks:
       - temporal-network
     ports:
-      - "7233:7233"  # Fixed: Remove 0.0.0.0 binding for Codespaces
+      - "7233:7233"
       - "7234:7234"
     volumes:
       - ./temporal-config:/etc/temporal/config/custom
       - ./certs:/etc/temporal/certs:ro
     entrypoint: >
       sh -c "
-        echo '🚀 Starting Temporal Server (Production-like with mTLS + JWT)' &&
+        echo '🚀 Starting Temporal with mTLS + JWT Authentication' &&
         echo '⏳ Waiting for PostgreSQL and JWT server...' &&
         sleep 10 &&
         echo '📁 Config directory contents:' &&
