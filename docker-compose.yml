@@ -33,23 +33,25 @@ services:
     networks:
       - temporal-network
     ports:
-      - "0.0.0.0:7233:7233"
+      - "0.0.0.0:7233:7233"  # PUBLIC port for external clients
       - "0.0.0.0:7234:7234"
     volumes:
       - ./temporal-config:/etc/temporal/config/custom
-    # Fixed: Use the correct config path
+      - ./certs:/etc/temporal/certs:ro
     entrypoint: >
       sh -c "
-        echo '🚀 Starting Temporal with JWT Authentication' &&
+        echo '🚀 Starting Temporal Server (Production-like with mTLS + JWT)' &&
         echo '⏳ Waiting for PostgreSQL and JWT server...' &&
         sleep 10 &&
         echo '📁 Config directory contents:' &&
         ls -la /etc/temporal/config/custom/ &&
-        echo '🔑 Starting server with development config...' &&
+        echo '🔐 SSL certificates:' &&
+        ls -la /etc/temporal/certs/ &&
+        echo '🔑 Starting server with development-ssl config...' &&
         export TEMPORAL_CONFIG_DIR=/etc/temporal/config/custom &&
-        export TEMPORAL_ENVIRONMENT=development &&
+        export TEMPORAL_ENVIRONMENT=development-ssl &&
         cd /etc/temporal &&
-        exec temporal-server --env development --config config/custom start
+        exec temporal-server --env development-ssl --config config/custom start
       "
 
   temporal-admin-tools:
