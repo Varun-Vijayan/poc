@@ -2,79 +2,6 @@ log:
   stdout: true
   level: info
 
-# Built-in JWT Authorization
-authorization:
-  jwtKeyProvider:
-    keySourceURIs:
-      - "file:///etc/temporal/jwt/public-key.pem"  # Static public key
-    refreshInterval: "1h"
-  permissionsClaimName: "permissions"
-  defaultUser: "default-user"
-  systemUser: "temporal-system"
-  # Built-in ClaimMapper
-  claimMapper: "default"  # Use Temporal's built-in mapper
-
-# Global TLS Configuration  
-global:
-  tls:
-    internode:
-      server:
-        certFile: /etc/temporal/certs/temporal-server.pem
-        keyFile: /etc/temporal/certs/temporal-server-key.pem
-        requireClientAuth: true
-        clientCAFiles: [/etc/temporal/certs/ca.pem]
-      client:
-        serverName: temporal-server
-        rootCAFiles: [/etc/temporal/certs/ca.pem]
-        certFile: /etc/temporal/certs/temporal-server.pem
-        keyFile: /etc/temporal/certs/temporal-server-key.pem
-    frontend:
-      server:
-        certFile: /etc/temporal/certs/temporal-server.pem
-        keyFile: /etc/temporal/certs/temporal-server-key.pem
-        requireClientAuth: true
-        clientCAFiles: [/etc/temporal/certs/ca.pem]
-      client:
-        serverName: temporal-server
-        rootCAFiles: [/etc/temporal/certs/ca.pem]
-        certFile: /etc/temporal/certs/temporal-server.pem
-        keyFile: /etc/temporal/certs/temporal-server-key.pem
-
-# Services Configuration
-services:
-  frontend:
-    rpc:
-      grpcPort: 7233
-      membershipPort: 6933
-      bindOnLocalHost: false
-      bindOnIP: "0.0.0.0"
-  
-  history:
-    rpc:
-      grpcPort: 7234
-      membershipPort: 6934
-      bindOnLocalHost: false
-      bindOnIP: "0.0.0.0"
-  
-  matching:
-    rpc:
-      grpcPort: 7235
-      membershipPort: 6935
-      bindOnLocalHost: false
-      bindOnIP: "0.0.0.0"
-  
-  worker:
-    rpc:
-      grpcPort: 7236
-      membershipPort: 6936
-      bindOnLocalHost: false
-      bindOnIP: "0.0.0.0"
-
-# Disable internal worker manager to prevent mTLS conflicts
-workerManager:
-  disable: true
-
-# Persistence configuration
 persistence:
   defaultStore: default
   visibilityStore: visibility
@@ -98,8 +25,76 @@ persistence:
         connectProtocol: "tcp"
         user: "temporal"
         password: "temporal"
-        maxConns: 20
+        maxConns: 10
         maxConnLifetime: "1h"
+
+global:
+  membership:
+    name: temporal
+    maxJoinDuration: 30s
+    broadcastAddress: "0.0.0.0"
+  authorization:
+    jwtKeyProvider:
+      keySourceURIs: ["http://jwt-server:80/jwks"]
+      refreshInterval: "1h"
+    permissionsClaimName: "permissions"
+    authorizer: "default"
+  tls:
+    internode:
+      server:
+        certFile: "/etc/temporal/certs/temporal-server.pem"
+        keyFile: "/etc/temporal/certs/temporal-server-key.pem"
+        requireClientAuth: true
+        clientCaFiles:
+          - "/etc/temporal/certs/ca.pem"
+      client:
+        serverName: "temporal"
+        rootCaFiles:
+          - "/etc/temporal/certs/ca.pem"
+    frontend:
+      server:
+        certFile: "/etc/temporal/certs/temporal-server.pem"
+        keyFile: "/etc/temporal/certs/temporal-server-key.pem"
+        requireClientAuth: true
+        clientCaFiles:
+          - "/etc/temporal/certs/ca.pem"
+      client:
+        serverName: "temporal"
+        rootCaFiles:
+          - "/etc/temporal/certs/ca.pem"
+
+# CRITICAL: Disable internal worker manager completely
+workerManager:
+  disable: true
+
+services:
+  frontend:
+    rpc:
+      grpcPort: 7233
+      membershipPort: 6933
+      bindOnLocalHost: false
+      bindOnIP: "0.0.0.0"
+  
+  matching:
+    rpc:
+      grpcPort: 7235
+      membershipPort: 6935
+      bindOnLocalHost: false
+      bindOnIP: "0.0.0.0"
+  
+  history:
+    rpc:
+      grpcPort: 7234
+      membershipPort: 6934
+      bindOnLocalHost: false
+      bindOnIP: "0.0.0.0"
+  
+  worker:
+    rpc:
+      grpcPort: 7239
+      membershipPort: 6939
+      bindOnLocalHost: false
+      bindOnIP: "0.0.0.0"
 
 clusterMetadata:
   enableGlobalNamespace: false
@@ -115,36 +110,13 @@ clusterMetadata:
 
 dcRedirectionPolicy:
   policy: "noop"
+  toDC: ""
 
 archival:
   history:
-    state: "enabled"
-    enableRead: true
-    provider:
-      filestore:
-        fileMode: "0666"
-        dirMode: "0766"
-        outputDirectory: "/tmp/temporal_archival/development"
+    state: "disabled"
   visibility:
-    state: "enabled"
-    enableRead: true
-    provider:
-      filestore:
-        fileMode: "0666"
-        dirMode: "0766"
-        outputDirectory: "/tmp/temporal_visibility_archival/development"
-
-namespaceDefaults:
-  archival:
-    history:
-      state: "enabled"
-      URI: "file:///tmp/temporal_archival/development"
-    visibility:
-      state: "enabled"
-      URI: "file:///tmp/temporal_visibility_archival/development"
-
-publicClient:
-  hostPort: "127.0.0.1:7233"
+    state: "disabled"
 
 dynamicConfigClient:
   filepath: "/etc/temporal/config/custom/dynamicconfig"

@@ -19,6 +19,7 @@ services:
     container_name: temporal
     depends_on:
       - postgresql
+      - jwt-server
     environment:
       - DB=postgresql
       - DB_PORT=5432
@@ -28,6 +29,8 @@ services:
       - ENABLE_ES=false
       - ES_SEEDS=
       - ES_VERSION=v7
+      - TLS=true
+      - TLS_REQUIRE_CLIENT_AUTH=true
     image: temporalio/auto-setup:1.22.0
     networks:
       - temporal-network
@@ -39,19 +42,31 @@ services:
       - ./certs:/etc/temporal/certs:ro
     entrypoint: >
       sh -c "
-        echo '🚀 Starting Temporal with Built-in JWT ClaimMapper' &&
-        echo '⏳ Waiting for PostgreSQL...' &&
+        echo '🚀 Starting Temporal with mTLS + JWT Authentication' &&
+        echo '⏳ Waiting for PostgreSQL and JWT server...' &&
         sleep 10 &&
         echo '📁 Config directory contents:' &&
         ls -la /etc/temporal/config/custom/ &&
-        echo '🔐 SSL certificates and JWKS:' &&
+        echo '🔐 SSL certificates:' &&
         ls -la /etc/temporal/certs/ &&
-        echo '🔑 Starting server with built-in JWT support...' &&
+        echo '🔑 Starting server with development-ssl config...' &&
         export TEMPORAL_CONFIG_DIR=/etc/temporal/config/custom &&
         export TEMPORAL_ENVIRONMENT=development-ssl &&
         cd /etc/temporal &&
         exec temporal-server --env development-ssl --config config/custom start
       "
+
+  temporal-admin-tools:
+    container_name: temporal-admin-tools
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_CLI_ADDRESS=temporal:7233
+    image: temporalio/admin-tools:1.22.0
+    networks:
+      - temporal-network
+    stdin_open: true
+    tty: true
 
   temporal-web:
     container_name: temporal-web
@@ -66,8 +81,32 @@ services:
     ports:
       - "8234:8080"
 
+  jwt-server:
+    image: nginx:alpine
+    container_name: jwt-server
+    networks:
+      - temporal-network
+    ports:
+      - "8080:80"
+    volumes:
+      - ./temporal-config:/usr/share/nginx/html:ro
+    command: >
+      sh -c "
+        echo '🔑 Starting JWT JWKS Server...' &&
+        echo 'Creating JWKS endpoint at /jwks' &&
+        if [ -f /usr/share/nginx/html/jwks ]; then
+          echo '✅ JWKS file found, contents:' &&
+          cat /usr/share/nginx/html/jwks
+        else
+          echo '❌ JWKS file not found! Creating placeholder...' &&
+          echo '{\"keys\":[]}' > /usr/share/nginx/html/jwks
+        fi &&
+        nginx -g 'daemon off;'
+      "
+
 volumes:
   postgresql-data:
+  temporal-data:
 
 networks:
   temporal-network:
