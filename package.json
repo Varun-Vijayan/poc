@@ -10,7 +10,7 @@
     "temporal:dev": "dotenv -e .env.local -- ts-node src/temporal/worker.ts",
     "temporal:workflow": "dotenv -e .env.local -- ts-node src/temporal/start-workflow.ts",
     "temporal:worker1": "dotenv -e .env.local -- ts-node src/temporal/worker-stage1.ts",
-    "temporal:worker2": "dotenv -e .env.local -- ts-node src/temporal/worker-stage2.ts", 
+    "temporal:worker2": "dotenv -e .env.local -- ts-node src/temporal/worker-stage2.ts",
     "temporal:worker3": "dotenv -e .env.local -- ts-node src/temporal/worker-stage3.ts",
     "temporal:worker1:ssl": "dotenv -e .env.local -- ts-node src/temporal/worker-stage1-ssl.ts",
     "temporal:worker2:ssl": "dotenv -e .env.local -- ts-node src/temporal/worker-stage2-ssl.ts",
@@ -50,7 +50,7 @@
     "dotenv-cli": "^7.3.0",
     "eslint": "^8.51.0",
     "eslint-config-next": "14.0.0",
-    "ts-node": "^10.9.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5.2.0"
   }
 }

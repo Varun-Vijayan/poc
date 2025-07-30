@@ -62,9 +62,15 @@ services:
       - temporal
     environment:
       - TEMPORAL_CLI_ADDRESS=temporal:7233
+      - TEMPORAL_TLS_CA=/etc/temporal/certs/ca.pem
+      - TEMPORAL_TLS_CERT=/etc/temporal/certs/worker-client.pem
+      - TEMPORAL_TLS_KEY=/etc/temporal/certs/worker-client-key.pem
+      - TEMPORAL_TLS_SERVER_NAME=temporal
     image: temporalio/admin-tools:1.22.0
     networks:
       - temporal-network
+    volumes:
+      - ./certs:/etc/temporal/certs:ro
     stdin_open: true
     tty: true
 

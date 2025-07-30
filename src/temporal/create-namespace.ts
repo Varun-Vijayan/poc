@@ -3,7 +3,7 @@ import { Connection, Client } from '@temporalio/client';
 async function createNamespace() {
   try {
     const connection = await Connection.connect({
-      address: 'localhost:7234',
+      address: 'localhost:7233',
     });
 
     const client = new Client({ connection });
@@ -12,7 +12,7 @@ async function createNamespace() {
       namespace: 'default',
       description: 'Default namespace for X Flow workflows',
       workflowExecutionRetentionPeriod: {
-        seconds: 7 * 24 * 60 * 60, // 7 days in seconds
+        seconds: BigInt(7 * 24 * 60 * 60), // Use BigInt instead of number
         nanos: 0
       },
     });
