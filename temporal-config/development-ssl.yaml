@@ -35,7 +35,7 @@ global:
     broadcastAddress: "0.0.0.0"
   authorization:
     jwtKeyProvider:
-      keySourceURIs: ["http://jwt-server:80/jwks"]
+      keyFiles: ["/etc/temporal/jwt/jwt-public.pem"]
       refreshInterval: "1h"
     permissionsClaimName: "permissions"
     authorizer: "default"

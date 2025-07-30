@@ -19,7 +19,6 @@ services:
     container_name: temporal
     depends_on:
       - postgresql
-      - jwt-server
     environment:
       - DB=postgresql
       - DB_PORT=5432
@@ -40,6 +39,7 @@ services:
     volumes:
       - ./temporal-config:/etc/temporal/config/custom
       - ./certs:/etc/temporal/certs:ro
+      - ./src/auth:/etc/temporal/jwt:ro
     entrypoint: >
       sh -c "
         echo '🚀 Starting Temporal with mTLS + JWT Authentication' &&
@@ -86,29 +86,6 @@ services:
       - temporal-network
     ports:
       - "8234:8080"
-
-  jwt-server:
-    image: nginx:alpine
-    container_name: jwt-server
-    networks:
-      - temporal-network
-    ports:
-      - "8080:80"
-    volumes:
-      - ./temporal-config:/usr/share/nginx/html:ro
-    command: >
-      sh -c "
-        echo '🔑 Starting JWT JWKS Server...' &&
-        echo 'Creating JWKS endpoint at /jwks' &&
-        if [ -f /usr/share/nginx/html/jwks ]; then
-          echo '✅ JWKS file found, contents:' &&
-          cat /usr/share/nginx/html/jwks
-        else
-          echo '❌ JWKS file not found! Creating placeholder...' &&
-          echo '{\"keys\":[]}' > /usr/share/nginx/html/jwks
-        fi &&
-        nginx -g 'daemon off;'
-      "
 
 volumes:
   postgresql-data:
