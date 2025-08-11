@@ -9,7 +9,7 @@ persistence:
   datastores:
     default:
       sql:
-        pluginName: "postgres"
+        pluginName: "postgres12"
         databaseName: "temporal"
         connectAddr: "postgresql:5432"
         connectProtocol: "tcp"
@@ -19,7 +19,7 @@ persistence:
         maxConnLifetime: "1h"
     visibility:
       sql:
-        pluginName: "postgres"
+        pluginName: "postgres12"
         databaseName: "temporal_visibility"
         connectAddr: "postgresql:5432"
         connectProtocol: "tcp"
