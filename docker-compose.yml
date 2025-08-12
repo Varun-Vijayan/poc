@@ -75,14 +75,25 @@ services:
     container_name: temporal-web
     depends_on:
       - temporal
-    environment:
-      - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
     image: temporalio/ui:2.28.0
     networks:
       - temporal-network
     ports:
       - "8234:8080"
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+      # mTLS to Temporal server
+      - TEMPORAL_TLS_CA=/etc/temporal/certs/ca.pem
+      - TEMPORAL_TLS_CERT=/etc/temporal/certs/worker-client.pem
+      - TEMPORAL_TLS_KEY=/etc/temporal/certs/worker-client-key.pem
+      - TEMPORAL_TLS_SERVER_NAME=temporal
+      # If your server requires JWT auth over gRPC, set this too (single-line token):
+      # - TEMPORAL_WEB_GRPC_METADATA__AUTHORIZATION=Bearer <paste_admin_token_here>
+    volumes:
+      - ./certs:/etc/temporal/certs:ro
+    # If sending JWT from file instead of inlining, mount it and set the env to the literal value:
+    # - ./src/auth:/etc/temporal/jwt:ro
 
 volumes:
   postgresql-data:
